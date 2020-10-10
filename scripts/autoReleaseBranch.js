@@ -1,6 +1,6 @@
 const core = require('@actions/core');
 const { getOctokit, context } = require('@actions/github');
-const { readFile } = require('fs');
+const { readFile, writeFileSync } = require('fs');
 const glob = require('globby');
 const path = require('path');
 // import glob from 'globby' 
@@ -54,8 +54,10 @@ const uploadToRepo = async (octo, files, owner, repo, branch) => {
   const currentCommit = await getCurrentCommit(octo, owner, repo, branch);
   console.log(`currentCommit ${currentCommit}`);
   // const filesPaths = await glob(coursePath)
-  // const filesBlobs = await Promise.all(filesPaths.map(createBlobForFile(octo, org, repo)))
-  // const pathsForBlobs = filesPaths.map(fullPath => path.relative(coursePath, fullPath))
+  const filesBlobs = await Promise.all(files.map(createBlobForFile(octo, owner, repo)));
+  console.log(filesBlobs);
+  const pathsForBlobs = files.map(fullPath => path.relative(coursePath, fullPath));
+  console.log(`pathsForBlobs ${pathsForBlobs}`);
   // const newTree = await createNewTree(
   //   octo,
   //   org,
@@ -74,7 +76,7 @@ const uploadToRepo = async (octo, files, owner, repo, branch) => {
   //   currentCommit.commitSha
   // )
   // await setBranchToCommit(octo, org, repo, branch, newCommit.sha)
-}
+};
 
 
 const getCurrentCommit = async (octo, owner, repo, branch) => {
@@ -87,7 +89,7 @@ const getCurrentCommit = async (octo, owner, repo, branch) => {
   const commitSha = refData.object.sha;
   console.log(`commitSha: ${commitSha}`);
   const { data: commitData } = await octo.git.getCommit({
-    owner: org,
+    owner,
     repo,
     commit_sha: commitSha,
   });
@@ -96,21 +98,22 @@ const getCurrentCommit = async (octo, owner, repo, branch) => {
     commitSha,
     treeSha: commitData.tree.sha,
   }
-}
+};
 
 // Notice that readFile's utf8 is typed differently from Github's utf-8
-const getFileAsUTF8 = (filePath) => readFile(filePath, 'utf-8')
+const getFileAsUTF8 = (filePath) => readFile(filePath, 'utf-8');
 
-const createBlobForFile = (octo, org, repo) => async (filePath) => {
-  const content = await getFileAsUTF8(filePath)
+const createBlobForFile = (octo, owner, repo) => async (filePath) => {
+  const content = await getFileAsUTF8(filePath);
+  console.log(`File content ${content}`);
   const blobData = await octo.git.createBlob({
-    owner: org,
+    owner,
     repo,
     content,
     encoding: 'utf-8',
   })
-  return blobData.data
-}
+  return blobData.data;
+};
 
 const createNewTree = async (octo, owner, repo, blobs, paths, parentTreeSha) => {
   // My custom config. Could be taken as parameters
@@ -171,7 +174,9 @@ const run = async () => {
   // console.log(`filePath: ${filesPaths}`);
   // console.log(`pathsForBlobs: ${pathsForBlobs}`);
 
-  await main();
+  writeFileSync('../test/file.md', '#Cambiado');
+
+  // await main();
 
   console.log('Done!');
 }
