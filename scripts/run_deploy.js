@@ -52,7 +52,7 @@ const createPullRequest = async () => {
       repo: currentRepo,
       title: 'PR Title',
       head: 'release/1.0',
-      base: 'master',
+      base: 'main',
       body: body,
     });
     console.log(response);
