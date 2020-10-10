@@ -1,3 +1,4 @@
+const core = require('@actions/core');
 const { GitHub, context } = require('@actions/github');
 const fs = require('fs');
 
@@ -5,8 +6,9 @@ const run = () => {
 
   console.log('running ci deploy');
   console.log(context.repo);
-  // const { owner: currentOwner, repo: currentRepo } = context.repo;
-  // console.log(`owner: ${owner}, repo: ${repo}`);
+  const { owner: currentOwner, repo: currentRepo } = context.repo;
+  console.log(`owner: ${currentOwner}, repo: ${currentOwner}`);
+  core.setFailed(error.message);
 }
 
 run();
