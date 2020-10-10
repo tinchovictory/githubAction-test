@@ -56,14 +56,14 @@ const uploadToRepo = async (octo, files, owner, repo, branch) => {
   // const filesPaths = await glob(coursePath)
   const filesBlobs = await Promise.all(files.map(createBlobForFile(octo, owner, repo)));
   console.log(filesBlobs);
-  const pathsForBlobs = files.map(fullPath => path.relative('../test', fullPath));
-  console.log(`pathsForBlobs ${pathsForBlobs}`);
+  // const pathsForBlobs = files.map(fullPath => path.relative('../test', fullPath));
+  // console.log(`pathsForBlobs ${pathsForBlobs}`);
   const newTree = await createNewTree(
     octo,
     owner,
     repo,
     filesBlobs,
-    pathsForBlobs,
+    files,
     currentCommit.treeSha
   );
   console.log(`newTree ${newTree}`);
