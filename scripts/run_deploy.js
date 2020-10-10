@@ -29,13 +29,13 @@ const run = async () => {
     // API Documentation: https://developer.github.com/v3/repos/releases/#create-a-release
     // Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-create-release
     const createReleaseResponse = await github.repos.createRelease({
-      currentOwner,
-      currentRepo,
+      owner: currentOwner,
+      repo: currentRepo,
       tag_name: tag,
       name: releaseName,
       body: body,
-      draft,
-      prerelease,
+      draft: false,
+      prerelease: false,
       target_commitish: commitish
     });
 
