@@ -2,13 +2,51 @@ const core = require('@actions/core');
 const { GitHub, context } = require('@actions/github');
 const fs = require('fs');
 
-const run = () => {
-
+const run = async () => {
   console.log('running ci deploy');
   console.log(context.repo);
   const { owner: currentOwner, repo: currentRepo } = context.repo;
   console.log(`owner: ${currentOwner}, repo: ${currentOwner}`);
-  core.setFailed('failing deploy');
+
+  const tag = '1.0.0';
+  const releaseName = `Release v${tag}`;
+  const body = '#v1.0.0\n##First Release\n-hello world';
+  const draft = false;
+  const prerelease = false;
+  const commitish = context.sha;
+
+  try {
+    // Create a release
+    // API Documentation: https://developer.github.com/v3/repos/releases/#create-a-release
+    // Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-create-release
+    const createReleaseResponse = await github.repos.createRelease({
+      currentOwner,
+      currentRepo,
+      tag_name: tag,
+      name: releaseName,
+      body: body,
+      draft,
+      prerelease,
+      target_commitish: commitish
+    });
+
+    // Get the ID, html_url, and upload URL for the created Release from the response
+    const {
+      data: { id: releaseId, html_url: htmlUrl, upload_url: uploadUrl }
+    } = createReleaseResponse;
+
+    console.log(`Release created!`);
+    console.log(`Release id: ${releaseId}`);
+    console.log(`Release url: ${htmlUrl}`);
+    console.log(`Release upload url: ${uploadUrl}`);
+
+    console.log(createReleaseResponse);
+
+
+    console.log('Done!');
+  } catch(error) {
+    core.setFailed(error.message);
+  }
 }
 
 run();
