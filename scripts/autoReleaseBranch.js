@@ -174,9 +174,9 @@ const run = async () => {
   // console.log(`filePath: ${filesPaths}`);
   // console.log(`pathsForBlobs: ${pathsForBlobs}`);
 
-  writeFileSync('../test/file.md', '#Cambiado');
+  writeFileSync('../test/file.md', '# Cambiado');
 
-  // await main();
+  await main();
 
   console.log('Done!');
 }
