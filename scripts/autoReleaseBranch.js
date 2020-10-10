@@ -58,24 +58,26 @@ const uploadToRepo = async (octo, files, owner, repo, branch) => {
   console.log(filesBlobs);
   const pathsForBlobs = files.map(fullPath => path.relative('../test', fullPath));
   console.log(`pathsForBlobs ${pathsForBlobs}`);
-  // const newTree = await createNewTree(
-  //   octo,
-  //   org,
-  //   repo,
-  //   filesBlobs,
-  //   pathsForBlobs,
-  //   currentCommit.treeSha
-  // )
-  // const commitMessage = `My commit message`
-  // const newCommit = await createNewCommit(
-  //   octo,
-  //   org,
-  //   repo,
-  //   commitMessage,
-  //   newTree.sha,
-  //   currentCommit.commitSha
-  // )
-  // await setBranchToCommit(octo, org, repo, branch, newCommit.sha)
+  const newTree = await createNewTree(
+    octo,
+    owner,
+    repo,
+    filesBlobs,
+    pathsForBlobs,
+    currentCommit.treeSha
+  );
+  console.log(`newTree ${newTree}`);
+  const commitMessage = `My commit message`
+  const newCommit = await createNewCommit(
+    octo,
+    owner,
+    repo,
+    commitMessage,
+    newTree.sha,
+    currentCommit.commitSha
+  );
+  console.log(`new Commit ${newCommit}`);
+  await setBranchToCommit(octo, owner, repo, branch, newCommit.sha);
 };
 
 
@@ -123,45 +125,45 @@ const createNewTree = async (octo, owner, repo, blobs, paths, parentTreeSha) => 
     mode: `100644`,
     type: `blob`,
     sha,
-  }))
+  }));
   const { data } = await octo.git.createTree({
     owner,
     repo,
     tree,
     base_tree: parentTreeSha,
-  })
+  });
   return data
-}
+};
 
 const createNewCommit = async (
   octo,
-  org,
+  owner,
   repo,
   message,
   currentTreeSha,
   currentCommitSha
 ) =>
   (await octo.git.createCommit({
-    owner: org,
+    owner,
     repo,
     message,
     tree: currentTreeSha,
     parents: [currentCommitSha],
-  })).data
+  })).data;
 
 const setBranchToCommit = (
   octo,
-  org,
+  owner,
   repo,
   branch,
   commitSha
 ) =>
   octo.git.updateRef({
-    owner: org,
+    owner,
     repo,
     ref: `heads/${branch}`,
     sha: commitSha,
-  })
+  });
 
 
 const run = async () => {
