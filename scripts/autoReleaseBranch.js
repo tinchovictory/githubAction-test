@@ -101,7 +101,7 @@ const getCurrentCommit = async (octo, owner, repo, branch) => {
 };
 
 // Notice that readFile's utf8 is typed differently from Github's utf-8
-const getFileAsUTF8 = (filePath) => readFile(filePath, 'utf-8');
+const getFileAsUTF8 = (filePath) => readFile(filePath, 'utf8');
 
 const createBlobForFile = (octo, owner, repo) => async (filePath) => {
   const content = await getFileAsUTF8(filePath);
