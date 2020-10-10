@@ -17,7 +17,8 @@ const run = async () => {
 
   try {
     // Github token
-    const githubToken = core.getInput('githubToken');
+    // const githubToken = core.getInput('githubToken');
+    const githubToken = process.env.GITHUB_TOKEN;
 
     console.log(`github token is ${githubToken}`);
 
