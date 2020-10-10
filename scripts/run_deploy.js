@@ -4,8 +4,9 @@ const fs = require('fs');
 const run = () => {
 
   console.log('running ci deploy');
-  const { owner: currentOwner, repo: currentRepo } = context.repo;
-  console.log(`owner: ${owner}, repo: ${repo}`);
+  console.log(context.repo);
+  // const { owner: currentOwner, repo: currentRepo } = context.repo;
+  // console.log(`owner: ${owner}, repo: ${repo}`);
 }
 
 run();
