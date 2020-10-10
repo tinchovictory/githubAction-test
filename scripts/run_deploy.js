@@ -16,8 +16,13 @@ const run = async () => {
   const commitish = context.sha;
 
   try {
+    // Github token
+    const githubToken = core.getInput('githubToken');
+
+    console.log(`github token is ${githubToken}`);
+
     // Get authenticated GitHub client (Ocktokit): https://github.com/actions/toolkit/tree/master/packages/github#usage
-    const github = new GitHub(process.env.GITHUB_TOKEN);
+    const github = new GitHub(githubToken);
 
     // Create a release
     // API Documentation: https://developer.github.com/v3/repos/releases/#create-a-release
