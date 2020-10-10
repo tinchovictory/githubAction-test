@@ -43,7 +43,7 @@ const main = async () => {
   // Get authenticated GitHub client
   const octo = getOctokit(githubToken);
 
-  const files = ['../test/file.md'];
+  const files = ['test/file.md'];
   const { owner: currentOwner, repo: currentRepo } = context.repo;
   
   await uploadToRepo(octo, files, currentOwner, currentRepo, 'release/1.0');
@@ -54,7 +54,8 @@ const uploadToRepo = async (octo, files, owner, repo, branch) => {
   const currentCommit = await getCurrentCommit(octo, owner, repo, branch);
   console.log(`currentCommit ${currentCommit}`);
   // const filesPaths = await glob(coursePath)
-  const filesBlobs = await Promise.all(files.map(createBlobForFile(octo, owner, repo)));
+  const filesPaths = files.map(fullPath => `../${fullPath}`);
+  const filesBlobs = await Promise.all(filesPaths.map(createBlobForFile(octo, owner, repo)));
   console.log(filesBlobs);
   // const pathsForBlobs = files.map(fullPath => path.relative('../test', fullPath));
   // console.log(`pathsForBlobs ${pathsForBlobs}`);
