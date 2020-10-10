@@ -32,9 +32,39 @@ const createRelease = async () => {
   }
 }
 
+const createPullRequest = async () => {
+  const { owner: currentOwner, repo: currentRepo } = context.repo;
+  console.log(context);
+  console.log(context.repo);
+  const body = '# v1.1.0\n## First Release\n- hello world';
+  const commitish = context.sha;
+
+  try {
+    // Github token
+    const githubToken = process.env.GITHUB_TOKEN;
+
+    // Get authenticated GitHub client
+    const github = getOctokit(githubToken);
+
+    // Create a release
+    const response = await github.pulls.create({
+      owner: currentOwner,
+      repo: currentRepo,
+      title: 'PR Title',
+      head: 'release/1.0',
+      base: 'master',
+      body: body,
+    });
+    console.log(response);
+  } catch(error) {
+    core.setFailed(error.message);
+  }
+}
+
 const run = async () => {
   console.log('Running ci deploy');
-  await createRelease();
+  // await createRelease();
+  await createPullRequest();
   console.log('Done!');
 }
 
