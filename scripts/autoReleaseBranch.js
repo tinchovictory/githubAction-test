@@ -1,6 +1,6 @@
 const core = require('@actions/core');
 const { getOctokit, context } = require('@actions/github');
-const { readFile, writeFileSync } = require('fs');
+const { readFileSync, writeFileSync } = require('fs');
 const glob = require('globby');
 const path = require('path');
 // import glob from 'globby' 
@@ -101,17 +101,18 @@ const getCurrentCommit = async (octo, owner, repo, branch) => {
 };
 
 // Notice that readFile's utf8 is typed differently from Github's utf-8
-const getFileAsUTF8 = (filePath) => readFile(filePath, 'utf8');
+const getFileAsUTF8 = (filePath) => readFileSync(filePath, 'utf-8');
 
 const createBlobForFile = (octo, owner, repo) => async (filePath) => {
-  const content = await getFileAsUTF8(filePath);
+  const content = getFileAsUTF8(filePath);
   console.log(`File content ${content}`);
   const blobData = await octo.git.createBlob({
     owner,
     repo,
     content,
     encoding: 'utf-8',
-  })
+  });
+  console.log(`blobdata ${blobData}`);
   return blobData.data;
 };
 
