@@ -8,7 +8,7 @@ const run = () => {
   console.log(context.repo);
   const { owner: currentOwner, repo: currentRepo } = context.repo;
   console.log(`owner: ${currentOwner}, repo: ${currentOwner}`);
-  core.setFailed(error.message);
+  core.setFailed('failing deploy');
 }
 
 run();
