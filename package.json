@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/tinchovictory/githubAction-test/issues"
   },
-  "homepage": "https://github.com/tinchovictory/githubAction-test#readme"
+  "homepage": "https://github.com/tinchovictory/githubAction-test#readme",
+  "dependencies": {
+    "globby": "^11.0.1"
+  }
 }
