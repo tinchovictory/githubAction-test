@@ -23,7 +23,7 @@ jobs:
         working-directory: scripts
 
       - name: Run deploy
-        run: npm run deploy
+        run: npm run autoReleaseBranch
         working-directory: scripts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
