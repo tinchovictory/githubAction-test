@@ -16,6 +16,9 @@ const run = async () => {
   const commitish = context.sha;
 
   try {
+    // Get authenticated GitHub client (Ocktokit): https://github.com/actions/toolkit/tree/master/packages/github#usage
+    const github = new GitHub(process.env.GITHUB_TOKEN);
+
     // Create a release
     // API Documentation: https://developer.github.com/v3/repos/releases/#create-a-release
     // Octokit Documentation: https://octokit.github.io/rest.js/#octokit-routes-repos-create-release
