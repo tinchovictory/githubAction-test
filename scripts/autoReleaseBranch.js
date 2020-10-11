@@ -39,6 +39,7 @@ const createReleaseBranch = async (octo, owner, repo, branchName) => {
     ref: `refs/heads/${branchName}`,
     sha: baseBranchSha,
   });
+  console.log(createBranchResponse);
 };
 
 const uploadToRepo = async (octo, files, owner, repo, branch, version) => {
