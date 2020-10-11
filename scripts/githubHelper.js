@@ -2,23 +2,23 @@ const { getOctokit, context } = require('@actions/github');
 const { readFileSync } = require('fs');
 
 /* Authenticated octokit client */
-export const octoClient = () => {
+exports.octoClient = () => {
   const githubToken = process.env.GITHUB_TOKEN;
   return getOctokit(githubToken);
 };
 
 /* Owner of the repo running */
-export const currentOwner = () => {
+exports.currentOwner = () => {
   return context.repo.owner;
 };
 
 /* Name of the repo running */
-export const currentRepo = () => {
+exports.currentRepo = () => {
   return context.repo.repo;
 };
 
 /* Create Pull Request from headBranch into baseBranch */
-export const createPullRequest = async (octo, owner, repo, headBranch, baseBranch, title, body) => {
+exports.createPullRequest = async (octo, owner, repo, headBranch, baseBranch, title, body) => {
   await octo.pulls.create({
     owner,
     repo,
@@ -30,7 +30,7 @@ export const createPullRequest = async (octo, owner, repo, headBranch, baseBranc
 };
 
 /* Create new branch starting from baseBranch */
-export const createBranch = async (octo, owner, repo, branchName, baseBranch) => {
+exports.createBranch = async (octo, owner, repo, branchName, baseBranch) => {
   const baseBranchSha = await getBranchSha(octo, owner, repo, baseBranch);
   const createBranchResponse = await octo.git.createRef({
     owner,
@@ -42,7 +42,7 @@ export const createBranch = async (octo, owner, repo, branchName, baseBranch) =>
 
 /* Add, Commit, Push files into branch */
 /* files is an array of files starting from the project root */
-export const uploadToRepo = async (octo, files, owner, repo, branch, message) => {
+exports.uploadToRepo = async (octo, files, owner, repo, branch, message) => {
   // gets commit's AND its tree's SHA
   const currentCommit = await getCurrentCommit(octo, owner, repo, branch);
   
@@ -71,7 +71,7 @@ export const uploadToRepo = async (octo, files, owner, repo, branch, message) =>
 };
 
 /* Create a release of current commit */
-export const createRelease = async (octo, tag, releaseName, body) => {
+exports.createRelease = async (octo, tag, releaseName, body) => {
   const commitish = context.sha;
 
   // Create a release

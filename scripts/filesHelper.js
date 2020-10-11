@@ -1,7 +1,7 @@
 const { readFileSync, writeFileSync } = require('fs');
 
 /* Read CHANGELOG.md and keep the notes from the latest version */
-export const releaseNotes = (changelogPath) => {
+exports.releaseNotes = (changelogPath) => {
   const changelogFile = readFileSync(changelogPath, 'utf-8');
   const lines = changelogFile.split(`\n`);
   const { memo: releaseNotes } = lines.reduce(
@@ -34,7 +34,7 @@ export const releaseNotes = (changelogPath) => {
 };
 
 /* Read semver from package.json */
-export const packageVersion = (packagePath) => {
+exports.packageVersion = (packagePath) => {
   const packageFile = readFileSync(packagePath, 'utf-8');
   const package = JSON.parse(packageFile);
   const { version } = package;
@@ -42,7 +42,7 @@ export const packageVersion = (packagePath) => {
 };
 
 /* Bump minor */
-export const newVersion = (prevVersion) => {
+exports.newVersion = (prevVersion) => {
   const semver = prevVersion.split('.');
   const nextMinor = parseInt(semver[1]) + 1;
   semver[1] = nextMinor.toString();
