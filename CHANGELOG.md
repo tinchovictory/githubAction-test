@@ -1,6 +1,7 @@
 # Unpublished
 ## Added
 - Testing auto release
+- Should create auto-release at midnight
 
 # v1.19.0
 ## Added
