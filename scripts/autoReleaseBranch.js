@@ -75,7 +75,7 @@ const getBranchSha = async (octo, owner, repo, branch) => {
   const { data: refData } = await octo.git.getRef({
     owner,
     repo,
-    ref: `refs/heads/${branch}`,
+    ref: `heads/${branch}`,
   });
   return refData.object.sha;
 };
