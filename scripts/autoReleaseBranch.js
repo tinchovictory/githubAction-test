@@ -1,11 +1,6 @@
 const core = require('@actions/core');
 const { getOctokit, context } = require('@actions/github');
 const { readFileSync, writeFileSync } = require('fs');
-const glob = require('globby');
-const path = require('path');
-// import glob from 'globby' 
-// import path from 'path'
-// import { readFile } from 'fs-extra'
 
 const createPullRequest = async () => {
   const { owner: currentOwner, repo: currentRepo } = context.repo;
@@ -36,31 +31,17 @@ const createPullRequest = async () => {
   }
 };
 
-const createReleaseBranch = async (octo, owner, repo, version) => {
+const createReleaseBranch = async (octo, owner, repo, branchName) => {
   const baseBranchSha = await getBranchSha(octo, owner, repo, 'main');
   const createBranchResponse = await octo.git.createRef({
     owner,
     repo,
-    ref: `refs/heads/auto-release/${version}`,
+    ref: `refs/heads/${branchName}`,
     sha: baseBranchSha,
   });
-
-  console.log(createBranchResponse);
 };
 
-// const main = async () => {
-//   const githubToken = process.env.GITHUB_TOKEN;
-
-//   // Get authenticated GitHub client
-//   const octo = getOctokit(githubToken);
-
-//   const files = ['test/file.md'];
-//   const { owner: currentOwner, repo: currentRepo } = context.repo;
-  
-//   await uploadToRepo(octo, files, currentOwner, currentRepo, 'release/1.0');
-// }
-
-const uploadToRepo = async (octo, files, owner, repo, branch) => {
+const uploadToRepo = async (octo, files, owner, repo, branch, version) => {
   // gets commit's AND its tree's SHA
   const currentCommit = await getCurrentCommit(octo, owner, repo, branch);
   
@@ -76,7 +57,7 @@ const uploadToRepo = async (octo, files, owner, repo, branch) => {
     currentCommit.treeSha
   );
   
-  const commitMessage = `Auto-release`;
+  const commitMessage = `Auto-release v${version}`;
   const newCommit = await createNewCommit(
     octo,
     owner,
@@ -93,18 +74,12 @@ const getBranchSha = async (octo, owner, repo, branch) => {
   const { data: refData } = await octo.git.getRef({
     owner,
     repo,
-    ref: `heads/${branch}`,
+    ref: `refs/heads/${branch}`,
   });
   return refData.object.sha;
 };
 
 const getCurrentCommit = async (octo, owner, repo, branch) => {
-  // const { data: refData } = await octo.git.getRef({
-  //   owner,
-  //   repo,
-  //   ref: `heads/${branch}`,
-  // });
-  
   const commitSha = await getBranchSha(octo, owner, repo, branch);
   
   const { data: commitData } = await octo.git.getCommit({
@@ -185,25 +160,45 @@ const setBranchToCommit = (
 
 const run = async () => {
   console.log('Running auto-release...');
-
-  // Bump package.json
-
-  // Remove unpublished
-  writeFileSync('../test/file.md', '# Cambiado');
   
   // Get authenticated GitHub client
   const githubToken = process.env.GITHUB_TOKEN;
   const octo = getOctokit(githubToken);
   const { owner, repo } = context.repo;
 
+  const version = 1.2;
+  const autoReleaseBranch = `auto-release/${version}`;
+
   // Create release branch
-  await createReleaseBranch(octo, owner, repo, '1.1');
+  console.log(`\nCreating branch ${autoReleaseBranch}...`);
+  try {
+    await createReleaseBranch(octo, owner, repo, autoReleaseBranch);
+  } catch(error) {
+    core.setFailed(error.message);
+    console.log(`\n\nFailed to create branch named ${autoReleaseBranch}`);
+    return;
+  }
+  console.log(`Branch ${autoReleaseBranch} created`);
 
-  const files = ['test/file.md'];
+  console.log(`\nBumping versions...`);
+  // Bump package.json
+
+  // Remove unpublished
+  writeFileSync('../test/file.md', '# Cambiado');
+  console.log(`\nVersions bumped`);
   
-  await uploadToRepo(octo, files, owner, repo, 'release/1.0');
+  const changedFiles = ['test/file.md'];
+  console.log(`\nPushing changes to ${autoReleaseBranch}...`);
+  try {
+    await uploadToRepo(octo, changedFiles, owner, repo, autoReleaseBranch, version);
+  } catch(error) {
+    core.setFailed(error.message);
+    console.log(`\n\nFailed to push changes`);
+    return;
+  }
+  console.log(`\nChanges pushed to ${autoReleaseBranch}`);
 
-  console.log('\nDone!');
+  console.log('\n\nDone!');
 }
 
 run();
