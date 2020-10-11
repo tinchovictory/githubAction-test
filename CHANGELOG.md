@@ -1,6 +1,6 @@
 # Unpublished
 
-# v1.1.0
+# v1.6.0
 ## Added
 - Some cool feature
 
