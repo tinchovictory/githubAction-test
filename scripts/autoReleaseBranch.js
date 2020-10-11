@@ -151,7 +151,7 @@ const run = async () => {
   const octo = getOctokit(githubToken);
   const { owner, repo } = context.repo;
 
-  const version = 1.2;
+  const version = 1.3;
   const startBranch = 'develop';
   const autoReleaseBranch = `auto-release/${version}`;
   const finalBranch = 'main';
