@@ -74,10 +74,6 @@ const createVersionRelease = async (octo, version) => {
   const releaseName = `Release v${version}`;
   
   try {
-    console.log(`context ${context}`);
-    console.log(`context repo ${context.repo}`);
-    console.log(`Current owner ${context.repo.owner}`);
-    console.log(`Current owner ${currentOwner()}`);
     await createRelease(octo, currentOwner(), currentRepo(), 'main', version, releaseName, releaseNotes(CURR_CHANGELOG_PATH));
     // await createRelease(octo, version, releaseName, releaseNotes(CURR_CHANGELOG_PATH));
   } catch(error) {
