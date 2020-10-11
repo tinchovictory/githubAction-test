@@ -142,6 +142,77 @@ const setBranchToCommit = (
     sha: commitSha,
   });
 
+const releaseNotes = (changelogPath) => {
+  const changelogFile = readFileSync(changelogPath, 'utf-8');
+  const lines = changelogFile.split(`\n`);
+  const { memo: releaseNotes } = lines.reduce(
+    ({ state, memo }, currentLine) => {
+      if (/#[ ]+Unpublished/.test(currentLine)) return { state, memo };
+      if (/^[ ]*$/.test(currentLine)) return { state, memo };
+      
+      if (/^#[ ]+v([0-9]+\.){2}[0-9]+/.test(currentLine)) {
+        if (state === 'idle') {
+          return { state: 'reading', memo: `${memo}${currentLine}\n` };
+        }
+        return { state: 'end', memo };
+      }
+      if (state === 'end') {
+        return { state, memo };
+      }
+      return { state, memo: `${memo}${currentLine}\n` };
+    },
+    { state: 'idle', memo: '' }
+  );
+  return releaseNotes.join('\n');
+};
+
+const packageVersion = (packagePath) => {
+  const packageFile = readFileSync(packagePath, 'utf-8');
+  const package = JSON.parse(packageFile);
+  const { version } = package;
+  return version;
+};
+
+const newVersion = (prevVersion) => {
+  const semver = prevVersion.split('.');
+  const nextMinor = parseInt(semver[1]) + 1;
+  semver[1] = nextMinor.toString();
+  return semver.join('.');
+};
+
+const removeUnpublished = (changelogPath, version) => {
+  const changelogFile = readFileSync(changelogPath, 'utf-8');
+  const lines = changelogFile.split(`\n`);
+  const { memo: changelogUpdated } = lines.reduce(
+    ({ state, memo }, currentLine) => {
+      if (!state && /#[ ]+Unpublished/.test(currentLine)) {
+        return { 
+          state: true,
+          memo: `${memo}${currentLine}\n\n# v${version}\n`,
+        };
+      }
+      return { state, memo: `${memo}${currentLine}\n` };
+    },
+    { state: false, memo: '' }
+  );
+  writeFileSync(changelogPath, changelogUpdated);
+};
+
+const bumpPackageVersion = (packagePath, version) => {
+  const packageFile = readFileSync(packagePath, 'utf-8');
+  const package = JSON.parse(packageFile);
+  package.version = version;
+  const json = JSON.stringify(package, null, 2);
+  const updatedFile = `${json}\n`
+  writeFileSync(packagePath, updatedFile);
+};
+
+
+const PACKAGE_PATH = 'package.json';
+const CHANGELOG_PATH = 'CHANGELOG.md';
+const CHANGED_FILES = [PACKAGE_PATH, CHANGELOG_PATH];
+const CURR_PACKAGE_PATH = `../${PACKAGE_PATH}`;
+const CURR_CHANGELOG_PATH = `../${CHANGELOG_PATH}`;
 
 const run = async () => {
   console.log('Running auto-release...');
@@ -151,7 +222,7 @@ const run = async () => {
   const octo = getOctokit(githubToken);
   const { owner, repo } = context.repo;
 
-  const version = 1.3;
+  const version = newVersion(packageVersion(CURR_PACKAGE_PATH));
   const startBranch = 'develop';
   const autoReleaseBranch = `auto-release/${version}`;
   const finalBranch = 'main';
@@ -167,17 +238,31 @@ const run = async () => {
   }
   console.log(`Branch ${autoReleaseBranch} created`);
 
-  console.log(`\nBumping versions...`);
   // Bump package.json
+  console.log(`\nBumping package.json to version ${version}...`);
+  try {
+    bumpPackageVersion(CURR_PACKAGE_PATH, version);
+  } catch(error) {
+    core.setFailed(error.message);
+    console.log(`\n\nFailed to bump package to version ${version}`);
+    return;
+  }
+  console.log(`\nVersion bumped`);
 
   // Remove unpublished
-  writeFileSync('../test/file.md', '# Cambiado');
-  console.log(`\nVersions bumped`);
+  console.log(`\nRemoving unpublished to version ${version}...`);
+  try {
+    removeUnpublished(CURR_CHANGELOG_PATH, version)
+  } catch(error) {
+    core.setFailed(error.message);
+    console.log(`\n\nFailed to edit changelog`);
+    return;
+  }
+  console.log(`\nUnpublished removed`);
   
-  const changedFiles = ['test/file.md'];
   console.log(`\nPushing changes to ${autoReleaseBranch}...`);
   try {
-    await uploadToRepo(octo, changedFiles, owner, repo, autoReleaseBranch, version);
+    await uploadToRepo(octo, CHANGED_FILES, owner, repo, autoReleaseBranch, version);
   } catch(error) {
     core.setFailed(error.message);
     console.log(`\n\nFailed to push changes`);
