@@ -1,5 +1,11 @@
 const core = require('@actions/core');
-const { createRelease, currentOwner, currentRepo } = require('./githubHelper');
+const { 
+  octoClient,
+  createRelease,
+  createPullRequest,
+  currentOwner,
+  currentRepo
+ } = require('./githubHelper');
 const { packageVersion, releaseNotes } = require('./filesHelper');
 // const fs = require('fs');
 
