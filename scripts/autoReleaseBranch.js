@@ -1,207 +1,117 @@
 const core = require('@actions/core');
-const { getOctokit, context } = require('@actions/github');
+const { 
+  octoClient,
+  currentRepo, 
+  currentOwner,
+  createPullRequest,
+  createBranch,
+  uploadToRepo
+} = require('./githubHelper');
+const { releaseNotes, packageVersion, newVersion } = require('./filesHelper');
 const { readFileSync, writeFileSync } = require('fs');
 
-const createPullRequest = async (octo, owner, repo, version, branch, baseBranch, body) => {
-  await octo.pulls.create({
-    owner,
-    repo,
-    title: `Auto-release v${version} [deploy]`,
-    head: branch,
-    base: baseBranch,
-    body,
-  });
-};
 
-const createReleaseBranch = async (octo, owner, repo, branchName, baseBranch) => {
-  const baseBranchSha = await getBranchSha(octo, owner, repo, baseBranch);
-  const createBranchResponse = await octo.git.createRef({
-    owner,
-    repo,
-    ref: `refs/heads/${branchName}`,
-    sha: baseBranchSha,
-  });
-};
+/* Create release branch starting from base branch */
+const createReleaseBranch = async (octo, branchName, baseBranch) => {
+  console.log(`\nCreating branch ${branchName}...`);
 
-const uploadToRepo = async (octo, files, owner, repo, branch, version) => {
-  // gets commit's AND its tree's SHA
-  const currentCommit = await getCurrentCommit(octo, owner, repo, branch);
-  
-  const filesPaths = files.map(fullPath => `../${fullPath}`);
-  const filesBlobs = await Promise.all(filesPaths.map(createBlobForFile(octo, owner, repo)));
-  
-  const newTree = await createNewTree(
-    octo,
-    owner,
-    repo,
-    filesBlobs,
-    files,
-    currentCommit.treeSha
-  );
-  
-  const commitMessage = `Auto-release v${version}`;
-  const newCommit = await createNewCommit(
-    octo,
-    owner,
-    repo,
-    commitMessage,
-    newTree.sha,
-    currentCommit.commitSha
-  );
-  
-  await setBranchToCommit(octo, owner, repo, branch, newCommit.sha);
-};
-
-const getBranchSha = async (octo, owner, repo, branch) => {
-  const { data: refData } = await octo.git.getRef({
-    owner,
-    repo,
-    ref: `heads/${branch}`,
-  });
-  return refData.object.sha;
-};
-
-const getCurrentCommit = async (octo, owner, repo, branch) => {
-  const commitSha = await getBranchSha(octo, owner, repo, branch);
-  
-  const { data: commitData } = await octo.git.getCommit({
-    owner,
-    repo,
-    commit_sha: commitSha,
-  });
-  
-  return {
-    commitSha,
-    treeSha: commitData.tree.sha,
+  try {
+    await createBranch(octo, currentOwner(), currentRepo(), branchName, baseBranch);
+  } catch(error) {
+    core.setFailed(error.message);
+    console.log(`\n\nFailed to create branch named ${branchName}`);
+    return false;
   }
+
+  console.log(`Branch ${branchName} created`);
+  return true;
 };
 
-const getFileAsUTF8 = (filePath) => readFileSync(filePath, 'utf-8');
-
-const createBlobForFile = (octo, owner, repo) => async (filePath) => {
-  const content = getFileAsUTF8(filePath);
-  
-  const blobData = await octo.git.createBlob({
-    owner,
-    repo,
-    content,
-    encoding: 'utf-8',
-  });
-  
-  return blobData.data;
-};
-
-const createNewTree = async (octo, owner, repo, blobs, paths, parentTreeSha) => {
-  const tree = blobs.map(({ sha }, index) => ({
-    path: paths[index],
-    mode: `100644`,
-    type: `blob`,
-    sha,
-  }));
-  
-  const { data } = await octo.git.createTree({
-    owner,
-    repo,
-    tree,
-    base_tree: parentTreeSha,
-  });
- 
-  return data
-};
-
-const createNewCommit = async (
-  octo,
-  owner,
-  repo,
-  message,
-  currentTreeSha,
-  currentCommitSha
-) =>
-  (await octo.git.createCommit({
-    owner,
-    repo,
-    message,
-    tree: currentTreeSha,
-    parents: [currentCommitSha],
-  })).data;
-
-const setBranchToCommit = (
-  octo,
-  owner,
-  repo,
-  branch,
-  commitSha
-) =>
-  octo.git.updateRef({
-    owner,
-    repo,
-    ref: `heads/${branch}`,
-    sha: commitSha,
-  });
-
-const releaseNotes = (changelogPath) => {
-  const changelogFile = readFileSync(changelogPath, 'utf-8');
-  const lines = changelogFile.split(`\n`);
-  const { memo: releaseNotes } = lines.reduce(
-    ({ state, memo }, currentLine) => {
-      if (/#[ ]+Unpublished/.test(currentLine)) return { state, memo };
-      if (/^[ ]*$/.test(currentLine)) return { state, memo };
-      
-      if (/^#[ ]+v([0-9]+\.){2}[0-9]+/.test(currentLine)) {
-        if (state === 'idle') {
-          return { state: 'reading', memo: `${memo}${currentLine}\n` };
-        }
-        return { state: 'end', memo };
-      }
-      if (state === 'end') {
-        return { state, memo };
-      }
-      return { state, memo: `${memo}${currentLine}\n` };
-    },
-    { state: 'idle', memo: '' }
-  );
-  return releaseNotes;
-};
-
-const packageVersion = (packagePath) => {
-  const packageFile = readFileSync(packagePath, 'utf-8');
-  const package = JSON.parse(packageFile);
-  const { version } = package;
-  return version;
-};
-
-const newVersion = (prevVersion) => {
-  const semver = prevVersion.split('.');
-  const nextMinor = parseInt(semver[1]) + 1;
-  semver[1] = nextMinor.toString();
-  return semver.join('.');
-};
-
+/* Remove # Unpublished from CHANGELOG.md */
 const removeUnpublished = (changelogPath, version) => {
-  const changelogFile = readFileSync(changelogPath, 'utf-8');
-  const lines = changelogFile.split(`\n`);
-  const { memo: changelogUpdated } = lines.reduce(
-    ({ state, memo }, currentLine) => {
-      if (!state && /#[ ]+Unpublished/.test(currentLine)) {
-        return { 
-          state: true,
-          memo: `${memo}${currentLine}\n\n# v${version}\n`,
-        };
-      }
-      return { state, memo: `${memo}${currentLine}\n` };
-    },
-    { state: false, memo: '' }
-  );
-  writeFileSync(changelogPath, changelogUpdated);
+  console.log(`\nRemoving unpublished to version ${version}...`);
+  
+  try {
+    /* Open changelog */
+    const changelogFile = readFileSync(changelogPath, 'utf-8');
+    const lines = changelogFile.split(`\n`);
+
+    /* Iterate each line adding the version number after the first Unpublished */
+    const { memo: changelogUpdated } = lines.reduce(
+      ({ state, memo }, currentLine) => {
+        if (!state && /#[ ]+Unpublished/.test(currentLine)) {
+          return { 
+            state: true,
+            memo: `${memo}${currentLine}\n\n# v${version}\n`,
+          };
+        }
+        return { state, memo: `${memo}${currentLine}\n` };
+      },
+      { state: false, memo: '' }
+    );
+
+    /* Save file */
+    writeFileSync(changelogPath, changelogUpdated);
+  } catch(error) {
+    core.setFailed(error.message);
+    console.log(`\nFailed to edit changelog`);
+    return false;
+  }
+
+  console.log(`Unpublished removed`);
+  return true;
 };
 
+/* Bump minor version from package.json */
 const bumpPackageVersion = (packagePath, version) => {
-  const packageFile = readFileSync(packagePath, 'utf-8');
-  const package = JSON.parse(packageFile);
-  package.version = version;
-  const json = JSON.stringify(package, null, 2);
-  const updatedFile = `${json}\n`
-  writeFileSync(packagePath, updatedFile);
+  console.log(`\nBumping package.json to version ${version}...`);
+  try {
+    const packageFile = readFileSync(packagePath, 'utf-8');
+    const package = JSON.parse(packageFile);
+    package.version = version;
+    const json = JSON.stringify(package, null, 2);
+    const updatedFile = `${json}\n`
+    writeFileSync(packagePath, updatedFile);
+  } catch(error) {
+    core.setFailed(error.message);
+    console.log(`\nFailed to bump package to version ${version}`);
+    return false;
+  }
+  console.log(`Version bumped`);
+  return true;
+};
+
+/* Push the changed files into the branch */
+const commitAndPushChanges = async (octo, branch, files, version) => {
+  console.log(`\nPushing changes to ${branch}...`);
+
+  try {
+    const commitMessage = `Auto-release v${version}`;
+    await uploadToRepo(octo, files, currentOwner(), currentRepo(), branch, commitMessage);
+  } catch(error) {
+    core.setFailed(error.message);
+    console.log(`\nFailed to push changes`);
+    return false;
+  }
+  console.log(`Changes pushed to ${branch}`);
+  return true;
+};
+
+const createPR = async (octo, headBranch, baseBranch, version, changelogPath) => {
+  console.log(`\nCreating PR to ${baseBranch}`);
+
+  try {
+    const title = `Auto-release v${version} [deploy]`;
+    const body = releaseNotes(changelogPath);
+    await createPullRequest(octo, currentOwner(), currentRepo(), headBranch, baseBranch, title, body);
+  } catch(error) {
+    core.setFailed(error.message);
+    console.log(`\nFailed to create PR`);
+    return false;
+  }
+
+  console.log(`PR created`);
+  return true;
 };
 
 
@@ -214,68 +124,33 @@ const CURR_CHANGELOG_PATH = `../${CHANGELOG_PATH}`;
 const run = async () => {
   console.log('Running auto-release...');
   
-  // Get authenticated GitHub client
-  const githubToken = process.env.GITHUB_TOKEN;
-  const octo = getOctokit(githubToken);
-  const { owner, repo } = context.repo;
-
   const version = newVersion(packageVersion(CURR_PACKAGE_PATH));
   const startBranch = 'develop';
   const autoReleaseBranch = `auto-release/${version}`;
   const finalBranch = 'main';
-
-  // Create release branch
-  console.log(`\nCreating branch ${autoReleaseBranch}...`);
-  try {
-    await createReleaseBranch(octo, owner, repo, autoReleaseBranch, startBranch);
-  } catch(error) {
-    core.setFailed(error.message);
-    console.log(`\n\nFailed to create branch named ${autoReleaseBranch}`);
-    return;
-  }
-  console.log(`Branch ${autoReleaseBranch} created`);
-
-  // Bump package.json
-  console.log(`\nBumping package.json to version ${version}...`);
-  try {
-    bumpPackageVersion(CURR_PACKAGE_PATH, version);
-  } catch(error) {
-    core.setFailed(error.message);
-    console.log(`\nFailed to bump package to version ${version}`);
-    return;
-  }
-  console.log(`Version bumped`);
-
-  // Remove unpublished
-  console.log(`\nRemoving unpublished to version ${version}...`);
-  try {
-    removeUnpublished(CURR_CHANGELOG_PATH, version)
-  } catch(error) {
-    core.setFailed(error.message);
-    console.log(`\nFailed to edit changelog`);
-    return;
-  }
-  console.log(`Unpublished removed`);
   
-  console.log(`\nPushing changes to ${autoReleaseBranch}...`);
-  try {
-    await uploadToRepo(octo, CHANGED_FILES, owner, repo, autoReleaseBranch, version);
-  } catch(error) {
-    core.setFailed(error.message);
-    console.log(`\nFailed to push changes`);
-    return;
-  }
-  console.log(`Changes pushed to ${autoReleaseBranch}`);
+  // Get authenticated GitHub client
+  const octo = octoClient();
 
-  console.log(`\nCreating PR to ${finalBranch}`);
-  try {
-    await createPullRequest(octo, owner, repo, version, autoReleaseBranch, finalBranch, releaseNotes(CURR_CHANGELOG_PATH));
-  } catch(error) {
-    core.setFailed(error.message);
-    console.log(`\nFailed to create PR`);
+  if (!await createReleaseBranch(octo, autoReleaseBranch, startBranch)) {
     return;
   }
-  console.log(`PR created`)
+
+  if (!bumpPackageVersion(CURR_PACKAGE_PATH, version)) {
+    return;
+  }
+
+  if (!removeUnpublished(CURR_CHANGELOG_PATH, version)) {
+    return;
+  }
+  
+  if (!await commitAndPushChanges(octo, autoReleaseBranch, CHANGED_FILES, version)) {
+    return;
+  }
+
+  if (!await createPR(octo, autoReleaseBranch, finalBranch, version, CURR_CHANGELOG_PATH)) {
+    return;
+  }
 
   console.log('\n\nDone!');
 }
