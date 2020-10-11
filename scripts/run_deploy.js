@@ -63,8 +63,8 @@ const createPullRequest = async () => {
 
 const run = async () => {
   console.log('Running ci deploy');
-  await createRelease();
-  // await createPullRequest();
+  // await createRelease();
+  await createPullRequest();
   console.log('Done!');
 }
 
