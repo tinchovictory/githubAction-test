@@ -1,4 +1,6 @@
 # Unpublished
+## Added
+- Testing auto release
 
 # v1.19.0
 ## Added
