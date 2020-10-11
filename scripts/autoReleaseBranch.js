@@ -2,37 +2,21 @@ const core = require('@actions/core');
 const { getOctokit, context } = require('@actions/github');
 const { readFileSync, writeFileSync } = require('fs');
 
-const createPullRequest = async () => {
-  const { owner: currentOwner, repo: currentRepo } = context.repo;
-  console.log(context);
-  console.log(context.repo);
+const createPullRequest = async (octo, owner, repo, version, branch, baseBranch) => {
   const body = '# v1.1.0\n## First Release\n- hello world';
-  const commitish = context.sha;
-
-  try {
-    // Github token
-    const githubToken = process.env.GITHUB_TOKEN;
-
-    // Get authenticated GitHub client
-    const github = getOctokit(githubToken);
-
-    // Create a release
-    const response = await github.pulls.create({
-      owner: currentOwner,
-      repo: currentRepo,
-      title: 'PR Title',
-      head: 'release/1.0',
-      base: 'main',
-      body: body,
-    });
-    console.log(response);
-  } catch(error) {
-    core.setFailed(error.message);
-  }
+  
+  await octo.pulls.create({
+    owner,
+    repo,
+    title: `Auto-release version ${version}`,
+    head: branch,
+    base: baseBranch,
+    body: body,
+  });
 };
 
-const createReleaseBranch = async (octo, owner, repo, branchName) => {
-  const baseBranchSha = await getBranchSha(octo, owner, repo, 'main');
+const createReleaseBranch = async (octo, owner, repo, branchName, baseBranch) => {
+  const baseBranchSha = await getBranchSha(octo, owner, repo, baseBranch);
   const createBranchResponse = await octo.git.createRef({
     owner,
     repo,
@@ -167,13 +151,15 @@ const run = async () => {
   const octo = getOctokit(githubToken);
   const { owner, repo } = context.repo;
 
-  const version = 1.2;
+  const startBranch = 'develop';
   const autoReleaseBranch = `auto-release/${version}`;
+  const finalBranch = 'main';
+  const version = 1.2;
 
   // Create release branch
   console.log(`\nCreating branch ${autoReleaseBranch}...`);
   try {
-    await createReleaseBranch(octo, owner, repo, autoReleaseBranch);
+    await createReleaseBranch(octo, owner, repo, autoReleaseBranch, startBranch);
   } catch(error) {
     core.setFailed(error.message);
     console.log(`\n\nFailed to create branch named ${autoReleaseBranch}`);
@@ -198,6 +184,16 @@ const run = async () => {
     return;
   }
   console.log(`\nChanges pushed to ${autoReleaseBranch}`);
+
+  console.log(`\nCreating PR to ${finalBranch}`);
+  try {
+    await createPullRequest(octo, owner, repo, version, autoReleaseBranch, finalBranch);
+  } catch(error) {
+    core.setFailed(error.message);
+    console.log(`\n\nFailed to create PR`);
+    return;
+  }
+  console.log(`\nPR created`)
 
   console.log('\n\nDone!');
 }

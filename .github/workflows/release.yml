@@ -1,12 +1,12 @@
-name: Deploy
+name: Auto-release
 
 # Triggers the workflow on push or pull request events but only for the develop branch
 on:
   push:
-    branches: [ main,release/* ]
+    branches: [ develop ]
 
 jobs:
-  lint:
+  auto-release:
     # Run job on a basic ubuntu machine
     runs-on: ubuntu-latest
 
@@ -23,7 +23,7 @@ jobs:
         working-directory: scripts
 
       - name: Run deploy
-        run: npm run autoReleaseBranch
+        run: npm run autoRelease
         working-directory: scripts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -5,7 +5,7 @@
   "main": "run_deploy",
   "scripts": {
     "deploy": "node run_deploy.js",
-    "autoReleaseBranch": "node autoReleaseBranch.js",
+    "autoRelease": "node autoReleaseBranch.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
