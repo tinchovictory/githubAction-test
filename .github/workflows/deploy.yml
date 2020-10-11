@@ -3,7 +3,7 @@ name: Deploy
 # Triggers the workflow on push or pull request events but only for the develop branch
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
     types: [ closed ]
 
 jobs:
