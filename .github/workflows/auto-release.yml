@@ -3,7 +3,7 @@ name: Auto-release
 # Triggers the workflow on push or pull request events but only for the develop branch
 on:
   schedule:
-    - cron: '55 19 * * *'
+    - cron: '0 23 * * *'
 
 jobs:
   auto-release:
