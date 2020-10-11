@@ -77,8 +77,8 @@ exports.createRelease = async (octo, owner, repo, branch, tag, releaseName, body
 
   // Create a release
   await octo.repos.createRelease({
-    owner: currentOwner(),
-    repo: currentRepo(),
+    owner,
+    repo,
     tag_name: tag,
     name: releaseName,
     body: body,
