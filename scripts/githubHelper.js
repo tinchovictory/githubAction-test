@@ -71,8 +71,9 @@ exports.uploadToRepo = async (octo, files, owner, repo, branch, message) => {
 };
 
 /* Create a release of current commit */
-exports.createRelease = async (octo, tag, releaseName, body) => {
-  const commitish = context.sha;
+exports.createRelease = async (octo, owner, repo, branch, tag, releaseName, body) => {
+  // const commitish = context.sha;
+  const commitSha = await getBranchSha(octo, owner, repo, branch);
 
   // Create a release
   await octo.repos.createRelease({
@@ -83,7 +84,7 @@ exports.createRelease = async (octo, tag, releaseName, body) => {
     body: body,
     draft: false,
     prerelease: false,
-    target_commitish: commitish
+    target_commitish: commitSha,
   });
 };
 
