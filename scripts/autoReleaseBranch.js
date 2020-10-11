@@ -6,7 +6,7 @@ const createPullRequest = async (octo, owner, repo, version, branch, baseBranch,
   await octo.pulls.create({
     owner,
     repo,
-    title: `Auto-release version ${version} [deploy]`,
+    title: `Auto-release v${version} [deploy]`,
     head: branch,
     base: baseBranch,
     body,
@@ -21,7 +21,6 @@ const createReleaseBranch = async (octo, owner, repo, branchName, baseBranch) =>
     ref: `refs/heads/${branchName}`,
     sha: baseBranchSha,
   });
-  console.log(createBranchResponse);
 };
 
 const uploadToRepo = async (octo, files, owner, repo, branch, version) => {
@@ -242,10 +241,10 @@ const run = async () => {
     bumpPackageVersion(CURR_PACKAGE_PATH, version);
   } catch(error) {
     core.setFailed(error.message);
-    console.log(`\n\nFailed to bump package to version ${version}`);
+    console.log(`\nFailed to bump package to version ${version}`);
     return;
   }
-  console.log(`\nVersion bumped`);
+  console.log(`Version bumped`);
 
   // Remove unpublished
   console.log(`\nRemoving unpublished to version ${version}...`);
@@ -253,30 +252,30 @@ const run = async () => {
     removeUnpublished(CURR_CHANGELOG_PATH, version)
   } catch(error) {
     core.setFailed(error.message);
-    console.log(`\n\nFailed to edit changelog`);
+    console.log(`\nFailed to edit changelog`);
     return;
   }
-  console.log(`\nUnpublished removed`);
+  console.log(`Unpublished removed`);
   
   console.log(`\nPushing changes to ${autoReleaseBranch}...`);
   try {
     await uploadToRepo(octo, CHANGED_FILES, owner, repo, autoReleaseBranch, version);
   } catch(error) {
     core.setFailed(error.message);
-    console.log(`\n\nFailed to push changes`);
+    console.log(`\nFailed to push changes`);
     return;
   }
-  console.log(`\nChanges pushed to ${autoReleaseBranch}`);
+  console.log(`Changes pushed to ${autoReleaseBranch}`);
 
   console.log(`\nCreating PR to ${finalBranch}`);
   try {
-    await createPullRequest(octo, owner, repo, version, autoReleaseBranch, finalBranch, releaseNotes());
+    await createPullRequest(octo, owner, repo, version, autoReleaseBranch, finalBranch, releaseNotes(CURR_CHANGELOG_PATH));
   } catch(error) {
     core.setFailed(error.message);
-    console.log(`\n\nFailed to create PR`);
+    console.log(`\nFailed to create PR`);
     return;
   }
-  console.log(`\nPR created`)
+  console.log(`PR created`)
 
   console.log('\n\nDone!');
 }
