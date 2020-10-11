@@ -194,12 +194,12 @@ const run = async () => {
   // Get authenticated GitHub client
   const githubToken = process.env.GITHUB_TOKEN;
   const octo = getOctokit(githubToken);
+  const { owner, repo } = context.repo;
 
   // Create release branch
   await createReleaseBranch(octo, owner, repo, '1.1');
 
   const files = ['test/file.md'];
-  const { owner, repo } = context.repo;
   
   await uploadToRepo(octo, files, owner, repo, 'release/1.0');
 
