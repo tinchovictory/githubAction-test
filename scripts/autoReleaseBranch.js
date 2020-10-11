@@ -160,7 +160,7 @@ const releaseNotes = (changelogPath) => {
     },
     { state: 'idle', memo: '' }
   );
-  return releaseNotes.join('\n');
+  return releaseNotes;
 };
 
 const packageVersion = (packagePath) => {
