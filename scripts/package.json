@@ -1,0 +1,19 @@
+{
+  "name": "scripts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "run_deploy",
+  "scripts": {
+    "deploy": "node run_deploy.js",
+    "autoReleaseBranch": "node autoReleaseBranch.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@actions/core": "^1.1.0",
+    "@actions/exec": "^1.0.0",
+    "@actions/github": "^4.0.0",
+    "globby": "^11.0.1"
+  }
+}

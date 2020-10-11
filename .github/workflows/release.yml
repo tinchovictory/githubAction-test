@@ -1,0 +1,29 @@
+name: Deploy
+
+# Triggers the workflow on push or pull request events but only for the develop branch
+on:
+  push:
+    branches: [ release/* ]
+
+jobs:
+  lint:
+    # Run job on a basic ubuntu machine
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+
+      # Install dependencies
+      - name: Installing Dependencies
+        run: npm install
+
+      - name: Install deployer
+        run: npm install
+        working-directory: scripts
+
+      - name: Run deploy
+        run: npm run autoReleaseBranch
+        working-directory: scripts
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
