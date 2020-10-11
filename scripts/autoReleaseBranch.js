@@ -8,6 +8,7 @@ const {
   uploadToRepo
 } = require('./githubHelper');
 const { releaseNotes, packageVersion, newVersion } = require('./filesHelper');
+const { readFileSync, writeFileSync } = require('fs');
 
 
 /* Create release branch starting from base branch */
