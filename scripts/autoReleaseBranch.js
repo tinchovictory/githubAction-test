@@ -2,16 +2,14 @@ const core = require('@actions/core');
 const { getOctokit, context } = require('@actions/github');
 const { readFileSync, writeFileSync } = require('fs');
 
-const createPullRequest = async (octo, owner, repo, version, branch, baseBranch) => {
-  const body = '# v1.1.0\n## First Release\n- hello world';
-  
+const createPullRequest = async (octo, owner, repo, version, branch, baseBranch, body) => {
   await octo.pulls.create({
     owner,
     repo,
-    title: `Auto-release version ${version}`,
+    title: `Auto-release version ${version} [deploy]`,
     head: branch,
     base: baseBranch,
-    body: body,
+    body,
   });
 };
 
@@ -272,7 +270,7 @@ const run = async () => {
 
   console.log(`\nCreating PR to ${finalBranch}`);
   try {
-    await createPullRequest(octo, owner, repo, version, autoReleaseBranch, finalBranch);
+    await createPullRequest(octo, owner, repo, version, autoReleaseBranch, finalBranch, releaseNotes());
   } catch(error) {
     core.setFailed(error.message);
     console.log(`\n\nFailed to create PR`);
