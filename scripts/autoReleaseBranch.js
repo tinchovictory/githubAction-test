@@ -151,10 +151,10 @@ const run = async () => {
   const octo = getOctokit(githubToken);
   const { owner, repo } = context.repo;
 
+  const version = 1.2;
   const startBranch = 'develop';
   const autoReleaseBranch = `auto-release/${version}`;
   const finalBranch = 'main';
-  const version = 1.2;
 
   // Create release branch
   console.log(`\nCreating branch ${autoReleaseBranch}...`);
