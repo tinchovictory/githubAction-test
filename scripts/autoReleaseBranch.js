@@ -11,7 +11,7 @@ const { releaseNotes, packageVersion, newVersion } = require('./filesHelper');
 
 
 /* Create release branch starting from base branch */
-const createReleaseBranch = (octo, branchName, baseBranch) => {
+const createReleaseBranch = async (octo, branchName, baseBranch) => {
   console.log(`\nCreating branch ${branchName}...`);
 
   try {
@@ -81,7 +81,7 @@ const bumpPackageVersion = (packagePath, version) => {
 };
 
 /* Push the changed files into the branch */
-const commitAndPushChanges = (octo, branch, files, version) => {
+const commitAndPushChanges = async (octo, branch, files, version) => {
   console.log(`\nPushing changes to ${branch}...`);
 
   try {
@@ -96,7 +96,7 @@ const commitAndPushChanges = (octo, branch, files, version) => {
   return true;
 };
 
-const createPR = (octo, headBranch, baseBranch, version, changelogPath) => {
+const createPR = async (octo, headBranch, baseBranch, version, changelogPath) => {
   console.log(`\nCreating PR to ${baseBranch}`);
 
   try {
@@ -131,7 +131,7 @@ const run = async () => {
   // Get authenticated GitHub client
   const octo = octoClient();
 
-  if (!createReleaseBranch(octo, autoReleaseBranch, startBranch)) {
+  if (!await createReleaseBranch(octo, autoReleaseBranch, startBranch)) {
     return;
   }
 
@@ -143,11 +143,11 @@ const run = async () => {
     return;
   }
   
-  if (!commitAndPushChanges(octo, autoReleaseBranch, CHANGED_FILES, version)) {
+  if (!await commitAndPushChanges(octo, autoReleaseBranch, CHANGED_FILES, version)) {
     return;
   }
 
-  if (!createPR(octo, autoReleaseBranch, finalBranch, version, CURR_CHANGELOG_PATH)) {
+  if (!await createPR(octo, autoReleaseBranch, finalBranch, version, CURR_CHANGELOG_PATH)) {
     return;
   }
 
