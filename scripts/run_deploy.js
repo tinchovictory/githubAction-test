@@ -73,7 +73,8 @@ const createVersionRelease = async (octo, version) => {
   const releaseName = `Release v${version}`;
   
   try {
-    await createRelease(octo, version, releaseName, releaseNotes(CURR_CHANGELOG_PATH));
+    await createRelease(octo, currentOwner(), currentRepo(), 'main', version, releaseName, releaseNotes(CURR_CHANGELOG_PATH));
+    // await createRelease(octo, version, releaseName, releaseNotes(CURR_CHANGELOG_PATH));
   } catch(error) {
     core.setFailed(error.message);
     console.log(`\nFailed to create release`);
