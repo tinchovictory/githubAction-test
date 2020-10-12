@@ -1,4 +1,6 @@
 # Unpublished
+
+# v1.20.0
 ## Added
 - Testing auto release
 - Should create auto-release at midnight
@@ -10,4 +12,5 @@
 # v1.0.0
 ## Added
 - Changelog added
+
 
