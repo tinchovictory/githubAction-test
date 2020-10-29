@@ -1,9 +1,12 @@
 name: Auto-release
 
 # Triggers the workflow on midnight
+#on:
+#  schedule:
+#    - cron: '0 3 * * *'
 on:
-  schedule:
-    - cron: '0 3 * * *'
+  push:
+    branches: [ onPush ]
 
 jobs:
   auto-release:
