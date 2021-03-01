@@ -5,6 +5,7 @@ echo "Archieving API"
 git archive --output=./test.tar --format=tar HEAD
 
 # Add AWS key
+eval `ssh-agent -s`
 ssh-add - <<< "$AWS_SECRET_KEY"
 
 scp -o "StrictHostKeyChecking no" \
